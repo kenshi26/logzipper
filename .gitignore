@@ -1,0 +1,13 @@
+# PyInstaller の出力
+build/
+
+dist/log_zipper/log_list.json
+
+# Python キャッシュ
+__pycache__/
+*.pyc
+*.pyo
+
+# IDE設定（VSCodeなどを使っていれば）
+.vscode/
+*.code-workspace
