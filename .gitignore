@@ -1,7 +1,6 @@
 # PyInstaller の出力
 build/
-
-dist/log_zipper/log_list.json
+dist/
 
 # Python キャッシュ
 __pycache__/
