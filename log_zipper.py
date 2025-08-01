@@ -7,7 +7,8 @@ import json
 class LogZipper:
     def __init__(self, json_path: str):
         self.log_paths = self.load_log_list(json_path)
-        self.yesterday = datetime.today().date() - timedelta(days=1)
+        self.threshold_time = datetime.now() - timedelta(days=1)
+        self.old_zip_threshold = datetime.now() - timedelta(days=90)
 
     def load_log_list(self, json_path: str):
         with open(json_path, 'r', encoding='utf-8') as f:
@@ -26,12 +27,12 @@ class LogZipper:
             if not subfolder.is_dir():
                 continue
             try:
-                folder_date = datetime.strptime(subfolder.name, "%Y-%m-%d").date()
+                folder_time = datetime.fromtimestamp(subfolder.stat().st_mtime)
             except ValueError:
                 continue  # フォルダ名が日付形式でない場合はスキップする。
              
-            # フォルダの日付が昨日までの場合、ZIP圧縮して削除する。
-            if folder_date <= self.yesterday:
+            # フォルダのタイムスタンプが24時間前のものをZIP圧縮して削除する。
+            if folder_time <= self.threshold_time:
                 zip_path = subfolder.with_suffix(".zip")
                 if zip_path.exists():
                     print(f"Skip (already zipped): {zip_path}")
@@ -44,6 +45,16 @@ class LogZipper:
                 except Exception as e:
                     print(f"Error deleting {subfolder}: {e}")
 
+            # フォルダのタイムスタンプが90日以上前のZIPファイルを削除する。 
+            for zip_file in log_path.glob("*.zip"):
+                try:
+                    zipped_time = datetime.fromtimestamp(zip_file.stat().st_mtime)
+                    if zipped_time < self.old_zip_threshold:
+                        zip_file.unlink()
+                        print(f"Deleted old zip : {zip_file}")
+                except Exception as e:
+                    print(f"Error checking zipped_time for {zip_file}: {e}")
+
     def run(self):
         for path in self.log_paths:
             if path.exists() and path.is_dir():
@@ -53,5 +64,5 @@ class LogZipper:
                 print(f"Invalid path: {path}")
 
 if __name__ == "__main__":
-    zipper = LogZipper("log_list.json")
+    zipper = LogZipper("params/log_list.json")
     zipper.run()
